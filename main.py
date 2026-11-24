@@ -1,57 +1,59 @@
-"""Write the make.fun bounty entry to $MAKEFUN_OUTPUT_DIR/entry.txt.
+"""Everyday Things, Two Lines, Longer Run.
 
 Competition: u-suga-everyday-things-two-lines-longer-run-f8734479
-("Everyday Things, Two Lines, Longer Run").
 
-The entry is two lines of plain text, 1-400 UTF-8 characters in total.
-Line 1 explains one everyday thing (a toaster) to a 10-year-old in one
-vivid sentence built on an analogy. Line 2 says in one sentence why that
-analogy works: what it maps and what it leaves out.
-
-Standard library only. Deterministic. No network access.
+Writes the two-line entry to $MAKEFUN_OUTPUT_DIR/entry.txt
+(default "/output") and self-checks the output before exiting.
+Standard library only, deterministic, no network.
 """
 
 import os
-import sys
 
 ENTRY = (
     "A toaster is a tiny sunbed for bread: it lies flat under hot glowing "
     "wires until its top turns golden brown, then pops up when it's done.\n"
-    "The sunbed maps the heat, the lying flat and the golden-brown tan, but "
-    "leaves out that bread can't get up and walk away \u2014 and a toaster "
-    "never asks how dark you want it, it just guesses."
+    "The sunbed maps the heat, the lying flat and the golden-brown tan, "
+    "but leaves out that bread can't get up and walk away \u2014 and a "
+    "toaster never asks how dark you want it, it just guesses."
 )
 
 
-def main() -> int:
+def main() -> None:
     output_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
-    path = os.path.join(output_dir, "entry.txt")
-
     os.makedirs(output_dir, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as f:
+    path = os.path.join(output_dir, "entry.txt")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(ENTRY)
 
     with open(path, "r", encoding="utf-8", newline="") as f:
         written = f.read()
 
-    assert written == ENTRY, "entry.txt does not equal the entry text"
-    assert 1 <= len(written) <= 400, (
-        f"entry length {len(written)} is outside 1-400 characters"
-    )
+    # Self-checks.
+    assert written == ENTRY, "entry.txt does not equal ENTRY"
+    assert 1 <= len(written) <= 400, f"char length {len(written)} out of range"
     assert written.strip(), "entry is whitespace-only"
-    # Exactly two lines: one newline, no trailing newline, no trailing
-    # whitespace on either line.
-    assert written.count("\n") == 1, "entry must be exactly two lines"
-    assert not written.endswith("\n"), "entry has a trailing newline"
+    assert written.count("\n") == 1, "entry must have exactly 2 lines"
+    assert not written.endswith("\n"), "trailing newline present"
     lines = written.split("\n")
-    assert all(line == line.rstrip() for line in lines), (
-        "entry has trailing whitespace"
+    assert len(lines) == 2, f"expected 2 lines, got {len(lines)}"
+    for line in lines:
+        assert line == line.rstrip(), "trailing whitespace on a line"
+        assert line.endswith("."), "line does not end with '.'"
+    # Strengthened checks.
+    assert len(written.encode("utf-8")) == 325, (
+        f"UTF-8 byte length {len(written.encode('utf-8'))} != 325"
     )
-    assert all(line.endswith(".") for line in lines), (
-        "each line must be one sentence ending with a period"
+    for line in lines:
+        assert line[0].isupper(), "line does not start with a capital letter"
+    assert "toaster" in lines[0], "line 1 must contain 'toaster'"
+    assert "sunbed" in lines[1], "line 2 must contain 'sunbed'"
+
+    print(
+        f"OK: wrote {path} "
+        f"({len(written)} chars, {len(written.encode('utf-8'))} bytes, "
+        f"{len(lines)} lines)"
     )
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
